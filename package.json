@@ -1,0 +1,16 @@
+{
+  "name": "pathfind-grid",
+  "version": "1.0.0",
+  "description": "Library for pathfinding in grid-based maps",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pathfinding",
+    "astar",
+    "algorithm"
+  ],
+  "author": "Casper Kuethe",
+  "license": "MIT"
+}

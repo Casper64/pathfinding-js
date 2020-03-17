@@ -1,5 +1,5 @@
 {
-  "name": "pathfind-js",
+  "name": "pathfinding-js",
   "version": "1.0.0",
   "description": "Library for pathfinding in grid-based maps",
   "main": "lib/index.js",

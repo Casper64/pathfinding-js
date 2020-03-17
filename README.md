@@ -1,1 +1,1 @@
-# pathfind-js
+# pathfinding-js

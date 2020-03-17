@@ -1,1 +1,1 @@
-# pathfind-grid
+# pathfind-js

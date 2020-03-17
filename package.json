@@ -1,16 +1,21 @@
 {
-  "name": "pathfind-grid",
+  "name": "pathfind-js",
   "version": "1.0.0",
   "description": "Library for pathfinding in grid-based maps",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "watch": "tsc -w"
   },
   "keywords": [
     "pathfinding",
-    "astar",
-    "algorithm"
+    "algorithm",
+    "astar"
   ],
   "author": "Casper Kuethe",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  }
 }

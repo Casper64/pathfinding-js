@@ -16,7 +16,7 @@ Installation
 ------------
 You can use it with Node.js and install the library with `npm`
 ```bash
-npm install pathfinding-js
+npm i @cetfox24/pathfinding-js
 ```
 
 Then, in your project:

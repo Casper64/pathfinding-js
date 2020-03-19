@@ -8,7 +8,7 @@ This library is meant to provide pathfinding algorithms which are easily to use 
 
 This library is created in typescript and provides types.
 
-There is a [demo project](https://casper64.github.io/pathfinding-js) ([repository](https://github.com/pathfinding-js/visual)) to show how you could implement the library in a sort of visualisation.
+There is a [demo project](https://casper64.github.io/pathfinding-js) ([repository](https://github.com/Casper64/Casper64.github.io/blob/master/pathfinding-js/src/index.ts)) to show how you could implement the library in a sort of visualisation.
 
 Note: you can only use this library for 2d grids!
 
@@ -28,6 +28,16 @@ Or with typescript:
 ```typescript
 import * as pf from "@cetfox24/pathfinding-js"
 ```
+
+Alternatively you can copy the build file (build/@cetfox-pathfinding-js.min.js):
+```html
+<script src="/@cetfox-pathfinding-js.min.js"></script>
+<script>
+// pf is defined as a global variable
+var grid = new pf.Grid(10, 8);
+</script></script>
+```
+
 Basic usage
 -----------
 Create a grid of width 10 and height 8:

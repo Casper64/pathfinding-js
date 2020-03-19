@@ -31,7 +31,7 @@ import * as pf from "@cetfox24/pathfinding-js"
 
 Alternatively you can copy the build file (build/@cetfox-pathfinding-js.min.js):
 ```html
-<script src="/@cetfox-pathfinding-js.min.js"></script>
+<script src="/@cetfox24-pathfinding-js.min.js"></script>
 <script>
 // pf is defined as a global variable
 var grid = new pf.Grid(10, 8);

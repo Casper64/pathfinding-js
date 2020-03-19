@@ -8,7 +8,7 @@ This library is meant to provide pathfinding algorithms which are easily to use 
 
 This library is created in typescript and provides types.
 
-There is a [demo project](https://casper64.github.io/pathfinding-js) ([repository](https://github.com/pathfinding-js/visual)) to show how you could implement the library in a sort of visualisation.
+There is a [demo project](https://casper64.github.io/pathfinding-js) ([repository](https://github.com/Casper64/Casper64.github.io/blob/master/pathfinding-js/src/index.ts)) to show how you could implement the library in a sort of visualisation.
 
 Note: you can only use this library for 2d grids!
 

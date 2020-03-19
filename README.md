@@ -28,6 +28,16 @@ Or with typescript:
 ```typescript
 import * as pf from "@cetfox24/pathfinding-js"
 ```
+
+Alternatively you can copy the build file (build/@cetfox-pathfinding-js.min.js):
+```html
+<script src="/@cetfox-pathfinding-js.min.js"></script>
+<script>
+// pf is defined as a global variable
+var grid = new pf.Grid(10, 8);
+</script></script>
+```
+
 Basic usage
 -----------
 Create a grid of width 10 and height 8:

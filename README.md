@@ -4,11 +4,11 @@ pathfinding-js
 
 Introduction
 ------------
-This library is meant to provide pathfinding algorithms which are easily to use in your own project.
+This library is meant to provide pathfinding algorithms which are easily to use in your own project, please note that this library is still in early stages of development.
 
 This library is created in typescript and provides types.
 
-There is a [demo project](casper64.github.com/pathfinding-js/visual) ([repository](https://github.com/pathfinding-js/visual)) to show how you could implement the library in a sort of visualisation.
+There is a [demo project](https://casper64.github.io/pathfinding-js) ([repository](https://github.com/pathfinding-js/visual)) to show how you could implement the library in a sort of visualisation.
 
 Note: you can only use this library for 2d grids!
 
@@ -16,17 +16,17 @@ Installation
 ------------
 You can use it with Node.js and install the library with `npm`
 ```bash
-npm i @cetfox24/pathfinding-js
+npm install @cetfox24/pathfinding-js
 ```
 
 Then, in your project:
 ```javascript
-var pf = require('pathfinding-js');
+var pf = require('@cetfox24/pathfinding-js');
 ```
 
 Or with typescript:
 ```typescript
-import * as pf from "pathfinding-js"
+import * as pf from "@cetfox24/pathfinding-js"
 ```
 Basic usage
 -----------
@@ -42,13 +42,13 @@ For example, if you want to set the node on position (2, 4) solid, where the x c
 grid.setSolid(2, 4, true);
 ```
 There are several algorithms:
-* Breadth-first-search: `BFS`
-* Dijkstra's algorithm: `Dijkstra`
+* (development) Breadth-first-search: `BFS`
+* (development) Dijkstra's algorithm: `Dijkstra`
 * A* algorithm: `AStar`
 
 For example, to use the A* algorithm:
 ```javascript
-let finder = new pf.Astar();
+let finder = new pf.AStar();
 let result = finder.findPath({x: 1, y: 1}, {x: 9, y: 6}, grid);
 let path = result.path;
 ```

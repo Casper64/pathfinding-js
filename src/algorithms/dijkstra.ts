@@ -1,41 +1,35 @@
 import { Graph, Neighbour } from '../graph'
 import { Grid } from '../grid'
-import { point, heuristic, CameFrom, Costs, SearchResult } from '../util'
+import { point, SearchResult, CameFrom, Costs } from '../util'
 
-
-
-export interface AStarOptions {
+interface DijkstraOptions {
   diagonal: boolean,
-  heuristic: heuristic,
-  smoothenPath: boolean,
-  passDiagonal: boolean
+  passDiagonal: boolean,
+  smoothenPath: boolean
 }
 
-export class AStar {
+export class Dijkstra {
   //options
   public diagonal: boolean;
-  public heuristic: heuristic;
   public passDiagonal: boolean;
   public diagonalCost = 1;
-
-  constructor (options = {} as Partial<AStarOptions>) {
+  
+  constructor (options = {} as Partial<DijkstraOptions>) {
     this.diagonal = options.diagonal || false;
-    this.heuristic = options.heuristic || "manhattan";
     this.passDiagonal = options.passDiagonal || false;
     if (options.smoothenPath) this.diagonalCost = Math.SQRT2;
+
   }
 
-  findPath (start: point, end: point, grid: Grid): SearchResult {
+  findPath (start: point, end: point, grid: Grid) {
     let current = grid.get(start.x, start.y);
     let open = [current];
     let closed: Graph[] = [];
-    let f_score = {} as Costs;
-    let cost_so_far = {} as Costs;
     let came_from = {} as CameFrom;
+    let cost_so_far = {} as Costs;
     let neighbours: Neighbour[] = [];
     let sc = `${start.x}:${start.y}`;
     let ec = `${end.x}:${end.y}`;
-    f_score[sc] = 0;
     cost_so_far[sc] = 0;
     while (open.length > 0) {
       closed.push(current);
@@ -62,47 +56,16 @@ export class AStar {
         let next = n[0];
         let new_cost = cost_so_far[current.coord] + next.movementCost + (n[1] > 3 ? this.diagonalCost-1 : 0);
         if (cost_so_far[next.coord] === undefined || new_cost < cost_so_far[next.coord]) {
-          let h = this.hvalue(end, next);
           cost_so_far[next.coord] = new_cost;
-          f_score[next.coord] = new_cost + h;
           came_from[next.coord] = current;
           //@ts-ignore
           open.insertSorted(next, (b: Graph, a: Graph) => {
-            return f_score[a.coord] - f_score[b.coord];
-          })
+            return cost_so_far[a.coord] - cost_so_far[b.coord];
+          });
         }
-      })
+      });
     }
-
     return {path: [], nodes: [], open, closed, length: 0};
-  }
-
-  hvalue (end: point, node: Graph): number {
-    let result = 0;
-    // if(this.diagonal) {
-      if (this.heuristic == "octile") {
-        let D = 1;
-        let D2 = Math.SQRT2;
-        let dx = Math.abs(node.x - end.x);
-        let dy = Math.abs(node.y - end.y);
-        result = D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
-      } else if (this.heuristic == "eucledian") {
-        let D = 1;
-        let dx = Math.abs(node.x - end.x);
-        let dy = Math.abs(node.y - end.y);
-        result = D * Math.sqrt(dx * dx + dy * dy);
-      } else if (this.heuristic == "chebyshev") {
-        let D = 1;
-        let D2 = 1;
-        let dx = Math.abs(node.x - end.x);
-        let dy = Math.abs(node.y - end.y);
-        result = D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
-      }
-    // }
-    else {
-      result = Math.abs(end.x - node.x) + Math.abs(end.y - node.y);
-    }
-    return result;
   }
 
   getNeighbours (node: Graph, end: string, grid: Grid): Neighbour[] {
@@ -118,7 +81,6 @@ export class AStar {
     }
     return nodes;
   }
-
 }
 
 interface Array<Graph> {

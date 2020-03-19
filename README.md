@@ -52,8 +52,8 @@ For example, if you want to set the node on position (2, 4) solid, where the x c
 grid.setSolid(2, 4, true);
 ```
 There are several algorithms:
-* (development) Breadth-first-search: `BFS`
-* (development) Dijkstra's algorithm: `Dijkstra`
+* Best-first-search: `BFS`
+* Dijkstra's algorithm: `Dijkstra`
 * A* algorithm: `AStar`
 
 For example, to use the A* algorithm:
@@ -69,3 +69,15 @@ For the `grid` defined previously `result.path` will be:
 [ {x: 1, y: 1}, {x: 1, y: 2}, {x: 1, y: 3}, {x: 1, y: 4}, {x: 1, y: 5}, {x: 1, y: 6}, {x: 2, y: 6},
   {x: 3, y: 6}, {x: 4, y: 6}, {x: 5, y: 6}, {x: 6, y: 6}, {x: 7, y: 6}, {x: 8, y: 6}, {x: 9, y: 6} ]
 ```
+
+Advanced usage
+--------------
+Options can be passed in the constructor of the finder:
+```javascript
+let finder = new pf.AStar({
+  diagonal: true,
+  heuristic: 'eucledian',
+  smoothenPath: true
+});
+```
+In this example the A* algorithm is allowed to go diagonal and smoothens the path and also uses the Eucledian heuristic function.

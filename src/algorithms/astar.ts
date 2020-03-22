@@ -2,13 +2,12 @@ import { Graph, Neighbour } from '../graph'
 import { Grid } from '../grid'
 import { point, heuristic, CameFrom, Costs, SearchResult } from '../util'
 
-
-
 export interface AStarOptions {
   diagonal: boolean,
   heuristic: heuristic,
   smoothenPath: boolean,
-  passDiagonal: boolean
+  passDiagonal: boolean,
+  bidirectional: boolean
 }
 
 export class AStar {
@@ -17,21 +16,24 @@ export class AStar {
   public heuristic: heuristic;
   public passDiagonal: boolean;
   public diagonalCost = 1;
+  public bidirectional: boolean;
 
   constructor (options = {} as Partial<AStarOptions>) {
     this.diagonal = options.diagonal || false;
     this.heuristic = options.heuristic || "manhattan";
     this.passDiagonal = options.passDiagonal || false;
+    this.bidirectional = options.bidirectional || false;
     if (options.smoothenPath) this.diagonalCost = Math.SQRT2;
   }
 
   findPath (start: point, end: point, grid: Grid): SearchResult {
+    if (this.bidirectional) return this.findPathbs(start, end, grid);
     let current = grid.get(start.x, start.y);
-    let open = [current];
-    let closed: Graph[] = [];
-    let f_score = {} as Costs;
-    let cost_so_far = {} as Costs;
-    let came_from = {} as CameFrom;
+    let open = [current]; // All the nodes that are open for examination
+    let closed: Graph[] = []; // All the nodes that are examined
+    let f_score = {} as Costs; // The movement cost g(x) + heuristic value h(x, end)
+    let cost_so_far = {} as Costs; // the movement cost in total g(x)
+    let came_from = {} as CameFrom; // hasmap to store where every node came from
     let neighbours: Neighbour[] = [];
     let sc = `${start.x}:${start.y}`;
     let ec = `${end.x}:${end.y}`;
@@ -77,29 +79,95 @@ export class AStar {
     return {path: [], nodes: [], open, closed, length: 0};
   }
 
+  private findPathbs (start: point, end: point, grid: Grid): SearchResult {
+    let current: Graph[] = [grid.get(start.x, start.y), grid.get(end.x, end.y)];
+    let open: Graph[][] = [[], []];
+    let closed: Graph[] = [];
+    let f_score: Costs[] = [{}, {}]; // Different in bidirectional search: g(x) + h(x, y), g(y), 
+    let g_score: Costs[] = [{}, {}]; // where g(x) is from x to start and g(y) is from y to end
+    let came_from: CameFrom[] = [{}, {}];
+    let sc = `${start.x}:${start.y}`;
+    let ec = `${end.x}:${end.y}`;
+    let neighbours: Neighbour[][] = [[], []];
+    f_score[0][sc] = 0;
+    f_score[1][ec] = 0;
+    g_score[0][sc] = 0;
+    g_score[1][ec] = 0;
+    open = [[grid.get(start.x, start.y)], [grid.get(end.x, end.y)]];
+    while (open[0].length > 0 && open[1].length > 0) {
+      closed.push(current[0], current[1]);
+      current = [open[0].pop()!, open[1].pop()!];
+
+      if (came_from[0][current[1].coord] !== undefined || came_from[1][current[0].coord] !== undefined) {
+        let d = Number(came_from[0][current[1].coord] !== undefined);
+        let path: point[] = [];
+        let nodes: Graph[] = [];
+        let path2: point[] = [];
+        let connecting = {x: current[d].x, y: current[d].y};
+        while (current[d]) {
+          path.push({x: current[d].x, y: current[d].y});
+          current[d] = came_from[1-d][current[d].coord];
+        }
+        current[1-d] = grid.get(connecting.x, connecting.y);
+        while (current[1-d]) {
+          path2.push({x: current[1-d].x, y: current[1-d].y});
+          current[1-d] = came_from[d][current[1-d].coord];
+        }
+        path.reverse();
+        path.pop();
+        path.push(...path2);
+        
+        let newOpen: Graph[] = [];
+        newOpen.push(...open[0]);
+        newOpen.push(...open[1]);
+        return {path: path, nodes: [], open: newOpen, closed, length: 0};
+      }
+
+      neighbours = [this.getNeighbours(current[0], ec, grid), this.getNeighbours(current[1], sc, grid)];
+      neighbours.forEach((direction, d) => {
+        direction.forEach(n => {
+          let next = n[0];
+          let nc = g_score[d][current[d].coord] + next.movementCost + (n[1] > 3 ? this.diagonalCost-1 : 0);
+          if (g_score[d][next.coord] === undefined || nc < g_score[d][next.coord]) {
+            let h = this.hvalue(current[1-d], next);
+            g_score[d][next.coord] = nc;
+            f_score[d][next.coord] = nc + h + g_score[1-d][current[1-d].coord];
+            came_from[d][next.coord] = current[d];
+            //@ts-ignore
+            open[d].insertSorted(next, (b: Graph, a: Graph) => {
+              return f_score[d][a.coord] - f_score[d][b.coord];
+            });
+          }
+        });
+      });
+    }
+    let newOpen: Graph[] = [];
+    newOpen.push(...open[0]);
+    newOpen.push(...open[1]);
+    return {path: [], nodes: [], open: newOpen, closed, length: 0};
+  }
+
   hvalue (end: point, node: Graph): number {
     let result = 0;
-    // if(this.diagonal) {
-      if (this.heuristic == "octile") {
-        let D = 1;
-        let D2 = Math.SQRT2;
-        let dx = Math.abs(node.x - end.x);
-        let dy = Math.abs(node.y - end.y);
-        result = D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
-      } else if (this.heuristic == "eucledian") {
-        let D = 1;
-        let dx = Math.abs(node.x - end.x);
-        let dy = Math.abs(node.y - end.y);
-        result = D * Math.sqrt(dx * dx + dy * dy);
-      } else if (this.heuristic == "chebyshev") {
-        let D = 1;
-        let D2 = 1;
-        let dx = Math.abs(node.x - end.x);
-        let dy = Math.abs(node.y - end.y);
-        result = D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
-      }
-    // }
-    else {
+    if (this.heuristic == "octile") {
+      let D = 1;
+      let D2 = Math.SQRT2;
+      let dx = Math.abs(node.x - end.x);
+      let dy = Math.abs(node.y - end.y);
+      result = D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
+    } else if (this.heuristic == "eucledian") {
+      let D = 1;
+      let dx = Math.abs(node.x - end.x);
+      let dy = Math.abs(node.y - end.y);
+      result = D * Math.sqrt(dx * dx + dy * dy);
+    } else if (this.heuristic == "chebyshev") {
+      let D = 1;
+      let D2 = 1;
+      let dx = Math.abs(node.x - end.x);
+      let dy = Math.abs(node.y - end.y);
+      result = D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
+    }
+    else { // Manhattan distance is the best for non diagonal movement
       result = Math.abs(end.x - node.x) + Math.abs(end.y - node.y);
     }
     return result;

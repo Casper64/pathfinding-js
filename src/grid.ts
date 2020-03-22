@@ -37,4 +37,17 @@ export class Grid {
       }
     }
   }
+
+  public random (chance = 0.7): number[][] {
+    this.matrix.forEach((row, y) => {
+      row.forEach((val, x) => {
+        let v = Number(Math.random() > chance);
+        if (v) this.setSolid(x, y, true);
+        else this.setSolid(x, y, false);
+        this.matrix[y][x] = v;
+      });
+    });
+    return this.matrix;
+  }
+
 }

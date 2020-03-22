@@ -5,7 +5,8 @@ import { point, SearchResult, CameFrom, Costs } from '../util'
 interface DijkstraOptions {
   diagonal: boolean,
   passDiagonal: boolean,
-  smoothenPath: boolean
+  smoothenPath: boolean,
+  bidirectional: boolean
 }
 
 export class Dijkstra {
@@ -13,15 +14,17 @@ export class Dijkstra {
   public diagonal: boolean;
   public passDiagonal: boolean;
   public diagonalCost = 1;
+  public bidirectional: boolean;
   
   constructor (options = {} as Partial<DijkstraOptions>) {
     this.diagonal = options.diagonal || false;
     this.passDiagonal = options.passDiagonal || false;
     if (options.smoothenPath) this.diagonalCost = Math.SQRT2;
-
+    this.bidirectional = options.bidirectional || false;
   }
 
-  findPath (start: point, end: point, grid: Grid) {
+  findPath (start: point, end: point, grid: Grid):  SearchResult {
+    if (this.bidirectional) return this.findPathbs(start, end, grid);
     let current = grid.get(start.x, start.y);
     let open = [current];
     let closed: Graph[] = [];
@@ -52,7 +55,7 @@ export class Dijkstra {
       }
 
       neighbours = this.getNeighbours(current, ec, grid);
-      neighbours.forEach((n, index) => {
+      neighbours.forEach((n) => {
         let next = n[0];
         let new_cost = cost_so_far[current.coord] + next.movementCost + (n[1] > 3 ? this.diagonalCost-1 : 0);
         if (cost_so_far[next.coord] === undefined || new_cost < cost_so_far[next.coord]) {
@@ -66,6 +69,68 @@ export class Dijkstra {
       });
     }
     return {path: [], nodes: [], open, closed, length: 0};
+  }
+
+  findPathbs (start: point, end: point, grid: Grid): SearchResult {
+    let current: Graph[] = [grid.get(start.x, start.y), grid.get(end.x, end.y)];
+    let open: Graph[][] = [[], []];
+    let closed: Graph[] = [];
+    let cost_so_far: Costs[] = [{}, {}];
+    let came_from: CameFrom[] = [{}, {}];
+    let neighbours: Neighbour[][] = [[], []];
+    let sc = `${start.x}:${start.y}`;
+    let ec = `${end.x}:${end.y}`;
+    cost_so_far[0][sc] = 0;
+    cost_so_far[1][ec] = 0;
+    open = [[grid.get(start.x, start.y)], [grid.get(end.x, end.y)]];
+    while (open[0].length > 0 && open[1].length > 0) {
+      closed.push(current[0], current[1]);
+      current = [open[0].pop()!, open[1].pop()!];
+
+      if (came_from[0][current[1].coord] !== undefined || came_from[1][current[0].coord] !== undefined) {
+        let d = Number(came_from[0][current[1].coord] !== undefined);
+        let path: point[] = [];
+        let nodes: Graph[] = [];
+        let path2: point[] = [];
+        let connecting = {x: current[d].x, y: current[d].y};
+        while (current[d]) {
+          path.push({x: current[d].x, y: current[d].y});
+          current[d] = came_from[1-d][current[d].coord];
+        }
+        current[1-d] = grid.get(connecting.x, connecting.y);
+        while (current[1-d]) {
+          path2.push({x: current[1-d].x, y: current[1-d].y});
+          current[1-d] = came_from[d][current[1-d].coord];
+        }
+        path.reverse();
+        path.push(...path2);
+        
+        let newOpen: Graph[] = [];
+        newOpen.push(...open[0]);
+        newOpen.push(...open[1]);
+        return {path: path, nodes: [], open: newOpen, closed, length: 0};
+      }
+
+      neighbours = [this.getNeighbours(current[0], ec, grid), this.getNeighbours(current[1], sc, grid)];
+      neighbours.forEach((direction, d) => {
+        direction.forEach((n) => {
+          let next = n[0];
+          let new_cost = cost_so_far[d][current[d].coord] + next.movementCost + (n[1] > 3 ? this.diagonalCost-1 : 0);
+          if (cost_so_far[d][next.coord] === undefined || new_cost < cost_so_far[d][next.coord]) {
+            cost_so_far[d][next.coord] = new_cost;
+            came_from[d][next.coord] = current[d];
+            //@ts-ignore
+            open[d].insertSorted(next, (b: Graph, a: Graph) => {
+              return cost_so_far[d][a.coord] - cost_so_far[d][b.coord];
+            });
+          };
+        });
+      });
+    }
+    let newOpen: Graph[] = [];
+    newOpen.push(...open[0]);
+    newOpen.push(...open[1]);
+    return {path: [], nodes: [], open: newOpen, closed, length: 0};
   }
 
   getNeighbours (node: Graph, end: string, grid: Grid): Neighbour[] {

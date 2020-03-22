@@ -77,7 +77,8 @@ Options can be passed in the constructor of the finder:
 let finder = new pf.AStar({
   diagonal: true,
   heuristic: 'eucledian',
-  smoothenPath: true
+  smoothenPath: true,
+  bidirectional: true
 });
 ```
-In this example the A* algorithm is allowed to go diagonal and smoothens the path and also uses the Eucledian heuristic function.
+In this example the A* algorithm searches from the start and from the end (bidirectional search), is allowed to go diagonal and smoothens the path and also uses the Eucledian heuristic function.

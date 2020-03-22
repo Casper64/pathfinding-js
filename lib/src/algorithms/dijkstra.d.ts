@@ -1,20 +1,23 @@
 import { Graph, Neighbour } from '../graph';
 import { Grid } from '../grid';
-import { point, SearchResult } from '../util';
+import { point } from '../util';
 interface DijkstraOptions {
     diagonal: boolean;
     passDiagonal: boolean;
     smoothenPath: boolean;
-    bidirectional: boolean;
 }
 export declare class Dijkstra {
     diagonal: boolean;
     passDiagonal: boolean;
     diagonalCost: number;
-    bidirectional: boolean;
     constructor(options?: Partial<DijkstraOptions>);
-    findPath(start: point, end: point, grid: Grid): SearchResult;
-    findPathbs(start: point, end: point, grid: Grid): SearchResult;
+    findPath(start: point, end: point, grid: Grid): {
+        path: point[];
+        nodes: Graph[];
+        open: Graph[];
+        closed: Graph[];
+        length: number;
+    };
     getNeighbours(node: Graph, end: string, grid: Grid): Neighbour[];
 }
 export {};

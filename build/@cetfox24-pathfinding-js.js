@@ -60,6 +60,21 @@ var pf = (function () {
                     }
                 }
             };
+            Grid.prototype.random = function (chance) {
+                var _this = this;
+                if (chance === void 0) { chance = 0.7; }
+                this.matrix.forEach(function (row, y) {
+                    row.forEach(function (val, x) {
+                        var v = Number(Math.random() > chance);
+                        if (v)
+                            _this.setSolid(x, y, true);
+                        else
+                            _this.setSolid(x, y, false);
+                        _this.matrix[y][x] = v;
+                    });
+                });
+                return this.matrix;
+            };
             return Grid;
         }());
         exports.Grid = Grid;
@@ -79,17 +94,20 @@ var pf = (function () {
                 this.diagonal = options.diagonal || false;
                 this.heuristic = options.heuristic || "manhattan";
                 this.passDiagonal = options.passDiagonal || false;
+                this.bidirectional = options.bidirectional || false;
                 if (options.smoothenPath)
                     this.diagonalCost = Math.SQRT2;
             }
             AStar.prototype.findPath = function (start, end, grid) {
                 var _this = this;
+                if (this.bidirectional)
+                    return this.findPathbs(start, end, grid);
                 var current = grid.get(start.x, start.y);
-                var open = [current];
-                var closed = [];
-                var f_score = {};
-                var cost_so_far = {};
-                var came_from = {};
+                var open = [current]; // All the nodes that are open for examination
+                var closed = []; // All the nodes that are examined
+                var f_score = {}; // The movement cost g(x) + heuristic value h(x, end)
+                var cost_so_far = {}; // the movement cost in total g(x)
+                var came_from = {}; // hasmap to store where every node came from
                 var neighbours = [];
                 var sc = start.x + ":" + start.y;
                 var ec = end.x + ":" + end.y;
@@ -131,9 +149,73 @@ var pf = (function () {
                 }
                 return { path: [], nodes: [], open: open, closed: closed, length: 0 };
             };
+            AStar.prototype.findPathbs = function (start, end, grid) {
+                var _this = this;
+                var current = [grid.get(start.x, start.y), grid.get(end.x, end.y)];
+                var open = [[], []];
+                var closed = [];
+                var f_score = [{}, {}]; // Different in bidirectional search: g(x) + h(x, y), g(y), 
+                var g_score = [{}, {}]; // where g(x) is from x to start and g(y) is from y to end
+                var came_from = [{}, {}];
+                var sc = start.x + ":" + start.y;
+                var ec = end.x + ":" + end.y;
+                var neighbours = [[], []];
+                f_score[0][sc] = 0;
+                f_score[1][ec] = 0;
+                g_score[0][sc] = 0;
+                g_score[1][ec] = 0;
+                open = [[grid.get(start.x, start.y)], [grid.get(end.x, end.y)]];
+                while (open[0].length > 0 && open[1].length > 0) {
+                    closed.push(current[0], current[1]);
+                    current = [open[0].pop(), open[1].pop()];
+                    if (came_from[0][current[1].coord] !== undefined || came_from[1][current[0].coord] !== undefined) {
+                        var d = Number(came_from[0][current[1].coord] !== undefined);
+                        var path = [];
+                        var nodes = [];
+                        var path2 = [];
+                        var connecting = { x: current[d].x, y: current[d].y };
+                        while (current[d]) {
+                            path.push({ x: current[d].x, y: current[d].y });
+                            current[d] = came_from[1 - d][current[d].coord];
+                        }
+                        current[1 - d] = grid.get(connecting.x, connecting.y);
+                        while (current[1 - d]) {
+                            path2.push({ x: current[1 - d].x, y: current[1 - d].y });
+                            current[1 - d] = came_from[d][current[1 - d].coord];
+                        }
+                        path.reverse();
+                        path.pop();
+                        path.push.apply(path, path2);
+                        var newOpen_1 = [];
+                        newOpen_1.push.apply(newOpen_1, open[0]);
+                        newOpen_1.push.apply(newOpen_1, open[1]);
+                        return { path: path, nodes: [], open: newOpen_1, closed: closed, length: 0 };
+                    }
+                    neighbours = [this.getNeighbours(current[0], ec, grid), this.getNeighbours(current[1], sc, grid)];
+                    neighbours.forEach(function (direction, d) {
+                        direction.forEach(function (n) {
+                            var next = n[0];
+                            var nc = g_score[d][current[d].coord] + next.movementCost + (n[1] > 3 ? _this.diagonalCost - 1 : 0);
+                            if (g_score[d][next.coord] === undefined || nc < g_score[d][next.coord]) {
+                                var h = _this.hvalue(current[1 - d], next);
+                                g_score[d][next.coord] = nc;
+                                f_score[d][next.coord] = nc + h + g_score[1 - d][current[1 - d].coord];
+                                came_from[d][next.coord] = current[d];
+                                //@ts-ignore
+                                open[d].insertSorted(next, function (b, a) {
+                                    return f_score[d][a.coord] - f_score[d][b.coord];
+                                });
+                            }
+                        });
+                    });
+                }
+                var newOpen = [];
+                newOpen.push.apply(newOpen, open[0]);
+                newOpen.push.apply(newOpen, open[1]);
+                return { path: [], nodes: [], open: newOpen, closed: closed, length: 0 };
+            };
             AStar.prototype.hvalue = function (end, node) {
                 var result = 0;
-                // if(this.diagonal) {
                 if (this.heuristic == "octile") {
                     var D = 1;
                     var D2 = Math.SQRT2;
@@ -154,8 +236,7 @@ var pf = (function () {
                     var dy = Math.abs(node.y - end.y);
                     result = D * (dx + dy) + (D2 - 2 * D) * Math.min(dx, dy);
                 }
-                // }
-                else {
+                else { // Manhattan distance is the best for non diagonal movement
                     result = Math.abs(end.x - node.x) + Math.abs(end.y - node.y);
                 }
                 return result;
@@ -205,9 +286,12 @@ var pf = (function () {
                 this.diagonal = options.diagonal || false;
                 this.heuristic = options.heuristic || "manhattan";
                 this.passDiagonal = options.passDiagonal || false;
+                this.bidirectional = options.bidirectional || false;
             }
             BFS.prototype.findPath = function (start, end, grid) {
                 var _this = this;
+                if (this.bidirectional)
+                    return this.findPathbs(start, end, grid);
                 var current = grid.get(start.x, start.y);
                 var open = [current];
                 var closed = [];
@@ -250,6 +334,66 @@ var pf = (function () {
                     });
                 }
                 return { path: [], nodes: [], open: open, closed: closed, length: 0 };
+            };
+            BFS.prototype.findPathbs = function (start, end, grid) {
+                var _this = this;
+                var current = [grid.get(start.x, start.y), grid.get(end.x, end.y)];
+                var open = [[], []];
+                var closed = [];
+                var cost_so_far = [{}, {}];
+                var came_from = [{}, {}];
+                var neighbours = [[], []];
+                var sc = start.x + ":" + start.y;
+                var ec = end.x + ":" + end.y;
+                cost_so_far[0][sc] = 0;
+                cost_so_far[1][ec] = 0;
+                open = [[grid.get(start.x, start.y)], [grid.get(end.x, end.y)]];
+                while (open[0].length > 0 && open[1].length > 0) {
+                    closed.push(current[0], current[1]);
+                    current = [open[0].pop(), open[1].pop()];
+                    if (came_from[0][current[1].coord] !== undefined || came_from[1][current[0].coord] !== undefined) {
+                        var d = Number(came_from[0][current[1].coord] !== undefined);
+                        var path = [];
+                        var nodes = [];
+                        var path2 = [];
+                        var connecting = { x: current[d].x, y: current[d].y };
+                        while (current[d]) {
+                            path.push({ x: current[d].x, y: current[d].y });
+                            current[d] = came_from[1 - d][current[d].coord];
+                        }
+                        current[1 - d] = grid.get(connecting.x, connecting.y);
+                        while (current[1 - d]) {
+                            path2.push({ x: current[1 - d].x, y: current[1 - d].y });
+                            current[1 - d] = came_from[d][current[1 - d].coord];
+                        }
+                        path.reverse();
+                        path.push.apply(path, path2);
+                        var newOpen_2 = [];
+                        newOpen_2.push.apply(newOpen_2, open[0]);
+                        newOpen_2.push.apply(newOpen_2, open[1]);
+                        return { path: path, nodes: [], open: newOpen_2, closed: closed, length: 0 };
+                    }
+                    neighbours = [this.getNeighbours(current[0], ec, grid), this.getNeighbours(current[1], sc, grid)];
+                    neighbours.forEach(function (direction, d) {
+                        direction.forEach(function (n) {
+                            var next = n[0];
+                            var new_cost = _this.hvalue(d == 0 ? end : start, next);
+                            if (cost_so_far[d][next.coord] === undefined || new_cost < cost_so_far[d][next.coord]) {
+                                cost_so_far[d][next.coord] = new_cost;
+                                came_from[d][next.coord] = current[d];
+                                //@ts-ignore
+                                open[d].insertSorted(next, function (b, a) {
+                                    return cost_so_far[d][a.coord] - cost_so_far[d][b.coord];
+                                });
+                            }
+                            ;
+                        });
+                    });
+                }
+                var newOpen = [];
+                newOpen.push.apply(newOpen, open[0]);
+                newOpen.push.apply(newOpen, open[1]);
+                return { path: [], nodes: [], open: newOpen, closed: closed, length: 0 };
             };
             BFS.prototype.hvalue = function (end, node) {
                 var result = 0;
@@ -327,9 +471,12 @@ var pf = (function () {
                 this.passDiagonal = options.passDiagonal || false;
                 if (options.smoothenPath)
                     this.diagonalCost = Math.SQRT2;
+                this.bidirectional = options.bidirectional || false;
             }
             Dijkstra.prototype.findPath = function (start, end, grid) {
                 var _this = this;
+                if (this.bidirectional)
+                    return this.findPathbs(start, end, grid);
                 var current = grid.get(start.x, start.y);
                 var open = [current];
                 var closed = [];
@@ -358,7 +505,7 @@ var pf = (function () {
                         return { path: path, nodes: nodes, open: open, closed: closed, length: length_3 };
                     }
                     neighbours = this.getNeighbours(current, ec, grid);
-                    neighbours.forEach(function (n, index) {
+                    neighbours.forEach(function (n) {
                         var next = n[0];
                         var new_cost = cost_so_far[current.coord] + next.movementCost + (n[1] > 3 ? _this.diagonalCost - 1 : 0);
                         if (cost_so_far[next.coord] === undefined || new_cost < cost_so_far[next.coord]) {
@@ -372,6 +519,66 @@ var pf = (function () {
                     });
                 }
                 return { path: [], nodes: [], open: open, closed: closed, length: 0 };
+            };
+            Dijkstra.prototype.findPathbs = function (start, end, grid) {
+                var _this = this;
+                var current = [grid.get(start.x, start.y), grid.get(end.x, end.y)];
+                var open = [[], []];
+                var closed = [];
+                var cost_so_far = [{}, {}];
+                var came_from = [{}, {}];
+                var neighbours = [[], []];
+                var sc = start.x + ":" + start.y;
+                var ec = end.x + ":" + end.y;
+                cost_so_far[0][sc] = 0;
+                cost_so_far[1][ec] = 0;
+                open = [[grid.get(start.x, start.y)], [grid.get(end.x, end.y)]];
+                while (open[0].length > 0 && open[1].length > 0) {
+                    closed.push(current[0], current[1]);
+                    current = [open[0].pop(), open[1].pop()];
+                    if (came_from[0][current[1].coord] !== undefined || came_from[1][current[0].coord] !== undefined) {
+                        var d = Number(came_from[0][current[1].coord] !== undefined);
+                        var path = [];
+                        var nodes = [];
+                        var path2 = [];
+                        var connecting = { x: current[d].x, y: current[d].y };
+                        while (current[d]) {
+                            path.push({ x: current[d].x, y: current[d].y });
+                            current[d] = came_from[1 - d][current[d].coord];
+                        }
+                        current[1 - d] = grid.get(connecting.x, connecting.y);
+                        while (current[1 - d]) {
+                            path2.push({ x: current[1 - d].x, y: current[1 - d].y });
+                            current[1 - d] = came_from[d][current[1 - d].coord];
+                        }
+                        path.reverse();
+                        path.push.apply(path, path2);
+                        var newOpen_3 = [];
+                        newOpen_3.push.apply(newOpen_3, open[0]);
+                        newOpen_3.push.apply(newOpen_3, open[1]);
+                        return { path: path, nodes: [], open: newOpen_3, closed: closed, length: 0 };
+                    }
+                    neighbours = [this.getNeighbours(current[0], ec, grid), this.getNeighbours(current[1], sc, grid)];
+                    neighbours.forEach(function (direction, d) {
+                        direction.forEach(function (n) {
+                            var next = n[0];
+                            var new_cost = cost_so_far[d][current[d].coord] + next.movementCost + (n[1] > 3 ? _this.diagonalCost - 1 : 0);
+                            if (cost_so_far[d][next.coord] === undefined || new_cost < cost_so_far[d][next.coord]) {
+                                cost_so_far[d][next.coord] = new_cost;
+                                came_from[d][next.coord] = current[d];
+                                //@ts-ignore
+                                open[d].insertSorted(next, function (b, a) {
+                                    return cost_so_far[d][a.coord] - cost_so_far[d][b.coord];
+                                });
+                            }
+                            ;
+                        });
+                    });
+                }
+                var newOpen = [];
+                newOpen.push.apply(newOpen, open[0]);
+                newOpen.push.apply(newOpen, open[1]);
+                return { path: [], nodes: [], open: newOpen, closed: closed, length: 0 };
             };
             Dijkstra.prototype.getNeighbours = function (node, end, grid) {
                 var nodes = [];

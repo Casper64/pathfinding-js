@@ -3,6 +3,14 @@ export interface point {
     x: number;
     y: number;
 }
+export declare class Point implements point {
+    x: number;
+    y: number;
+    constructor(x: number, y: number);
+    get coord(): string;
+    get length(): number;
+    equals(p: Point): boolean;
+}
 export declare const h: heuristic[];
 export declare type heuristic = "manhattan" | "octile" | "eucledian" | "chebyshev";
 export declare type CameFrom = {

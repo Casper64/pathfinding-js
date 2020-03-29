@@ -1,6 +1,7 @@
 import { Graph, Neighbour } from '../graph'
 import { Grid } from '../grid'
-import { point, heuristic, CameFrom, Costs, SearchResult } from '../util'
+import { point, heuristic, CameFrom, Costs, SearchResult, Point } from '../util'
+import { MeshGrid, lineLength } from '../mesh/mesh-grid';
 
 export interface AStarOptions {
   diagonal: boolean,
@@ -79,6 +80,75 @@ export class AStar {
     return {path: [], nodes: [], open, closed, length: 0};
   }
 
+  public findPathMesh (sp: Point, ep: Point, grid: MeshGrid) {
+    this.heuristic = 'octile';
+    interface cf {
+      [key: string]: Point
+    }
+    interface cost {
+      [key: string]: number
+    }
+    let start = Object.keys(grid.map).map(key => grid.map[key].node).sort((a, b) => this.hvalue(sp, a) - this.hvalue(sp, b))[0];
+    let end = Object.keys(grid.map).map(key => grid.map[key].node).sort((a, b) => this.hvalue(ep, a) - this.hvalue(ep, b))[0];
+    let current = grid.map[start.coord].node;
+    let open = [current]; // All the nodes that are open for examination
+    let closed: Point[] = []; // All the nodes that are examined
+    let f_score = {} as cost; // The movement cost g(x) + heuristic value h(x, end)
+    let cost_so_far = {} as cost; // the movement cost in total g(x)
+    let came_from = {} as cf; // hasmap to store where every node came from
+    let neighbours: Graph[] = [];
+    f_score[start.coord] = 0;
+    cost_so_far[start.coord] = 0;
+    while (open.length > 0) {
+      closed.push(current);
+      current = open.pop()!;
+
+      if (current.coord === end.coord) { // finished
+        let path: Point[] = [];
+        while (current.coord != start.coord) {
+          path.push(current);
+          current = came_from[current.coord];
+        }
+        for (let i = 0; i < path.length; i++) {
+          current = new Point(path[i].x, path[i].y);
+          let corner = false;
+          grid.meshes.forEach(m => {
+            m.vertices.forEach(v => {
+              if (current.equals(v)) corner = true;
+            });
+          });
+          if (!corner) { // define better
+            path.splice(i, 1);
+            i--;
+          }          
+        }
+        path.push(start, sp);
+        path.reverse();
+        path.push(end, ep)
+
+        let length = path.length;
+        return {path, open, closed, length}
+      }
+
+      neighbours = grid.get(current).neighbours;
+      neighbours.forEach((next) => {
+        let new_cost = cost_so_far[current.coord] + next.movementCost;
+        if (cost_so_far[next.coord] === undefined || new_cost < cost_so_far[next.coord]) {
+          let h = this.hvalue(end, next);
+          cost_so_far[next.coord] = new_cost;
+          f_score[next.coord] = new_cost + h;
+          came_from[next.coord] = current;
+          //@ts-ignore
+          open.insertSorted(next, (b: Point, a: Point) => {
+            return f_score[a.coord] - f_score[b.coord];
+          })
+        }
+      })
+    }
+
+    return {path: [], nodes: [], open, closed, length: 0};
+  }
+
   private findPathbs (start: point, end: point, grid: Grid): SearchResult {
     let current: Graph[] = [grid.get(start.x, start.y), grid.get(end.x, end.y)];
     let open: Graph[][] = [[], []];
@@ -147,7 +217,7 @@ export class AStar {
     return {path: [], nodes: [], open: newOpen, closed, length: 0};
   }
 
-  hvalue (end: point, node: Graph): number {
+  hvalue (end: point, node: Graph | Point): number {
     let result = 0;
     if (this.heuristic == "octile") {
       let D = 1;

@@ -89,18 +89,18 @@ Usage for non-square 2d grids
 Define the outlay of your map:
 ```javascript
 let mapVertices = [new pf.Point(0, 0), new pf.Point(100, 0), new pf.Point(100, 1000), new pf.Point(0, 100)];
-let outlay = new pf.Polygon(mapVertices);
+let outlay = new pf.Shapes.Polygon(mapVertices);
 ```
 Next instantiate some object that should be in the map. They could be any polygon, but the algorithm Bowyer-Watson algorithm used in this library works best for convex polygons. Meaning that the shapes don't have large indents and they cannot overlap. For example:
 ```javascript
 let object1Vertices = [new pf.Point(10, 10), new pf.Point(30, 5), new pf.Point(20, 20)];
-let object1 = new pf.Polygon(object1Vertices);
+let object1 = new pf.Shapes.Polygon(object1Vertices);
 let object2Vertices = [new pf.Point(40, 20), new pf.Point(70, 20), new pf.Point(70, 50), new pf.Point(40, 50)];
-let object2 = new pf.Polygon(object2Vertices);
+let object2 = new pf.Shapes.Polygon(object2Vertices);
 let object3Vertices = [new pf.Point(10, 90), new pf.Point(30, 60), new pf.Point(60, 60), new pf.Point(70, 80), new pf.Point(30, 95)];
-let object3 = new pf.Polygon(object3Vertices);
+let object3 = new pf.Shapes.Polygon(object3Vertices);
 let object4Vertices = [new pf.Point(85, 40), new pf.Point(95, 40), new pf.Point(95, 70), new pf.Point(85, 70)];
-let object4 = new pf.Polygon(object4Vertices);
+let object4 = new pf.Shapes.Polygon(object4Vertices);
 
 let grid = new pf.MeshGrid([object1, object2, object3, object4], outlay.vertices);
 grid.generateMap();

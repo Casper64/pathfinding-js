@@ -1,5 +1,5 @@
 {
-  "name": "@cetfox24/package.json",
+  "name": "@cetfox24/pathfinding-js",
   "version": "1.3.3",
   "description": "Library for pathfinding in grid-based maps",
   "main": "lib/index.js",

@@ -1,7 +1,8 @@
 import { Graph, Neighbour } from '../graph'
 import { Grid } from '../grid'
 import { point, heuristic, CameFrom, Costs, SearchResult, Point } from '../util'
-import { MeshGrid, lineLength } from '../mesh/mesh-grid';
+import { MeshGrid } from '../mesh/mesh-grid';
+import { Vec2 } from "../maths/vector2"
 
 export interface AStarOptions {
   diagonal: boolean,
@@ -109,23 +110,48 @@ export class AStar {
           path.push(current);
           current = came_from[current.coord];
         }
+        path.push(start);
+        // path.splice(0, 0, end);
+        // for (let i = 0; i < path.length; i++) {
+        //   current = new Point(path[i].x, path[i].y);
+          
+        //   let corner = false;
+        //   grid.meshes.forEach(m => {
+        //     m.vertices.forEach(v => {
+        //       if (current.equals(v)) corner = true;
+        //     });
+        //   });
+        //   if (!corner) { // define better
+        //     path.splice(i, 1);
+        //     i--;
+        //   }          
+        // }
+        // console.log(...path)
+        path.push(sp);
+        path.splice(0, 0, ep);
+        let prev: Point | undefined = undefined;
         for (let i = 0; i < path.length; i++) {
           current = new Point(path[i].x, path[i].y);
-          let corner = false;
-          grid.meshes.forEach(m => {
-            m.vertices.forEach(v => {
-              if (current.equals(v)) corner = true;
-            });
-          });
-          if (!corner) { // define better
-            path.splice(i, 1);
+          if (i+2 >= path.length) break;
+          let next = new Point(path[i+2].x, path[i+2].y);
+          let vec = new Vec2(current, next);
+          if (grid.meshes.every(mesh => mesh.edges.every(edge => {
+            return !edge.intersect(vec, true) && !mesh.sidePoints.some(sp => sp.equals(vec.p1) || sp.equals(vec.p2));
+          }))) {
+            let evaluating = path[i+1];
+            if (prev != undefined && grid.meshes.some(mesh => (mesh.vertices.some(v => v.equals(evaluating))) || mesh.sidePoints.some(v => v.equals(evaluating)))
+                && grid.meshes.some(mesh => (mesh.vertices.some(v => v.equals(next))) || mesh.sidePoints.some(v => v.equals(next)))) {
+                  prev = current;
+                  continue;
+                }
+            prev = path.splice(i+1, 1)[0];
             i--;
-          }          
+          } else prev = current;
         }
-        path.push(start, sp);
+        path.push(sp);
         path.reverse();
-        path.push(end, ep)
-
+        path.push(ep);
+        if (grid.meshes.every(mesh => mesh.edges.every(edge => !edge.intersect(new Vec2(sp, ep), true)))) path = [sp, ep];
         let length = path.length;
         return {path, open, closed, length}
       }

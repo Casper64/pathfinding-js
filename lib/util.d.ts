@@ -9,7 +9,13 @@ export declare class Point implements point {
     constructor(x: number, y: number);
     get coord(): string;
     get length(): number;
+    static get zero(): Point;
+    distance(b: Point): number;
     equals(p: Point): boolean;
+    add(p: Point): Point;
+    sub(p: Point): Point;
+    static add(p1: Point, p2: Point): Point;
+    static sub(p1: Point, p2: Point): Point;
 }
 export declare const h: heuristic[];
 export declare type heuristic = "manhattan" | "octile" | "eucledian" | "chebyshev";

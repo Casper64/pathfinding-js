@@ -1,6 +1,7 @@
-import { Mesh } from "./mesh";
+import { Polygon } from "../shapes/polygon";
 import { Point } from "../util";
 import { Graph } from "../graph";
+import { Triangle } from "../shapes/triangle";
 interface MeshGridMap {
     [key: string]: {
         node: Point;
@@ -8,10 +9,10 @@ interface MeshGridMap {
     };
 }
 export declare class MeshGrid {
-    meshes: Mesh[];
+    meshes: Polygon[];
     convexHull: Point[];
     map: MeshGridMap;
-    constructor(meshes: Mesh[], mapOutline: Point[]);
+    constructor(meshes: Polygon[], mapOutline: Point[]);
     get(point: Point): {
         node: Point;
         neighbours: Graph[];
@@ -23,36 +24,4 @@ export declare class MeshGrid {
     private BowyerWatson;
     get smallestTriangle(): Triangle;
 }
-export declare class Triangle extends Mesh {
-    constructor(vertices: Point[]);
-    join(t: Triangle): {
-        valid: false;
-        newShape: null;
-    } | {
-        valid: true;
-        newShape: Mesh;
-    };
-    equals(t: Triangle): boolean;
-    get edges(): Point[][];
-    get sidePoints(): Point[];
-    get boundingBox(): Point[];
-    containsEdge(edge: Point[]): boolean;
-    get circumcircle(): {
-        center: Point;
-        radius: number;
-    };
-    insideCircumcircle(point: Point): boolean;
-}
-export declare function lineFromPoints(p1: Point, p2: Point): {
-    a: number;
-    b: number;
-    c: number;
-};
-export declare function ppBisector(p1: Point, p2: Point, a: number, b: number, c: number): {
-    a: number;
-    b: number;
-    c: number;
-};
-export declare function lineLineIntersection(a1: number, b1: number, c1: number, a2: number, b2: number, c2: number): Point;
-export declare function lineLength(p1: Point, p2: Point): number;
 export {};

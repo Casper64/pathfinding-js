@@ -5,4 +5,5 @@ export * from "./algorithms/astar";
 export * from "./algorithms/bfs";
 export * from "./algorithms/dijkstra";
 export * from "./mesh/mesh-grid";
-export * from "./mesh/mesh";
+export * as Shapes from "./shapes";
+export * as Math from "./maths";

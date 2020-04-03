@@ -1,7 +1,7 @@
 {
   "name": "@cetfox24/pathfinding-js",
   "version": "1.3.3",
-  "description": "Library for pathfinding in grid-based maps",
+  "description": "Library for pathfinding in 2d maps",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {

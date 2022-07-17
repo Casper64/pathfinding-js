@@ -2,16 +2,19 @@ pathfinding-js
 ==============
 #### A library for pathfinding in grid-based maps. ####
 
+Note:
+-----
+Not under active maintenance, because I no longer use it in my projects. But I'm happy to add a feature if you suggest it or fix some bugs. Pathfinding is close to my heart since it was my first "real" algorithm I coded.
+
 Introduction
 ------------
 This library is meant to provide pathfinding algorithms which are easily to use in your own project, please note that this library is still in early stages of development.
 
 This library is created in typescript and provides types.
 
-I made a visualisation with this library for square grids [here](https://casper64.github.io/pathfinding-js) ([code](https://github.com/Casper64/Casper64.github.io/blob/master/pathfinding-js/src/index.ts)).
-And another visualisation how the algorithms generate a navigation mesh (non square 2d plane) based on the shapes you place in the 2d grid [here](https://casper64.github.io/pathfinding-js/navmesh) ([code](https://github.com/Casper64/Casper64.github.io/blob/master/pathfinding-js/navmesh/src/index.ts)) (working on implementing this in 3D!).
+I made a visualisation with this library for square grids [here](https://www.casperswebsites.com/pathfinding/index.html) ([code](https://github.com/Casper64/Casper64.github.io/tree/master/pathfinding-js)).
+And another visualisation how the algorithms generate a navigation mesh (non square 2d plane) based on the shapes you place in the 2d grid [here](https://casper64.github.io/pathfinding-js/navmesh) ([code](https://github.com/Casper64/Casper64.github.io/blob/master/pathfinding-js/navmesh/src/index.ts)
 
-Note: This library is still in early stages of development so function and class names could change in the future!
 
 Installation
 ------------
